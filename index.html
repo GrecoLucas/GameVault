@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameVault</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════ LOGIN PAGE ═══════════════════════════════ -->
+<div id="login-page" class="page active">
+  <div class="login-bg">
+    <div class="login-grid"></div>
+    <div class="login-glow glow-1"></div>
+    <div class="login-glow glow-2"></div>
+  </div>
+  <div class="login-container">
+    <div class="login-card glass">
+      <div class="login-logo">
+        <div class="logo-icon">⬡</div>
+        <h1 class="logo-text"><span class="accent">GAME VAULT</span></h1>
+        <p class="logo-sub">Classified Access Only</p>
+      </div>
+      <div id="login-error" class="login-error hidden"></div>
+      <div class="form-group">
+        <label class="form-label">USER</label>
+        <input id="login-user" type="text" class="form-input" placeholder="Lucas ou Rafael" autocomplete="username" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">ACCESS CODE</label>
+        <input id="login-password" type="password" class="form-input" placeholder="••••••••••" autocomplete="current-password" />
+      </div>
+      <button id="login-btn" class="btn-primary" onclick="handleLogin()">
+        <span class="btn-text">INITIATE SESSION</span>
+        <span class="btn-glow"></span>
+      </button>
+      <p class="login-note">Access restricted to authorized operators</p>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ APP PAGE ═══════════════════════════════ -->
+<div id="app-page" class="page">
+
+  <!-- HEADER -->
+  <header class="app-header glass">
+    <div class="header-left">
+      <div class="logo-icon small">⬡</div>
+      <span class="logo-text small">GAME<span class="accent">VAULT</span></span>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">
+        <span class="nav-icon">◈</span> DASHBOARD
+      </button>
+      <button class="nav-btn" data-tab="stats" onclick="switchTab('stats')">
+        <span class="nav-icon">◉</span> STATS
+      </button>
+      <button class="nav-btn" data-tab="rankings" onclick="switchTab('rankings')">
+        <span class="nav-icon">◆</span> RANKINGS
+      </button>
+    </nav>
+    <div class="header-right">
+      <div class="user-badge glass">
+        <span class="user-dot"></span>
+        <span id="current-user-name">—</span>
+      </div>
+      <button class="logout-btn" onclick="handleLogout()" title="Logout">⏻</button>
+    </div>
+  </header>
+
+  <!-- ───────────── DASHBOARD TAB ───────────── -->
+  <div id="tab-dashboard" class="tab-content active">
+    <div class="dashboard-layout">
+      
+      <!-- SIDEBAR -->
+      <aside class="sidebar glass">
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">SEARCH</h3>
+          <div class="search-wrapper">
+            <span class="search-icon">⌕</span>
+            <input id="search-input" type="text" class="search-input" placeholder="Search games..." oninput="handleSearch()" />
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">CATEGORIES</h3>
+          <div id="category-filters" class="category-list">
+            <button class="cat-pill active" data-cat="all" onclick="filterCategory('all')">All Games</button>
+          </div>
+        </div>
+        <div class="sidebar-section">
+          <h3 class="sidebar-title">SORT BY</h3>
+          <select class="form-select" onchange="handleSort(this.value)">
+            <option value="name">Name A–Z</option>
+            <option value="my_time">My Time ↓</option>
+            <option value="rafa_time">Rafa's Time ↓</option>
+            <option value="total_time">Total Time ↓</option>
+            <option value="rating">Community Score ↓</option>
+          </select>
+        </div>
+        <div class="sidebar-stats glass-inner">
+          <div class="mini-stat">
+            <span class="mini-stat-label">TOTAL GAMES</span>
+            <span id="stat-total" class="mini-stat-value">—</span>
+          </div>
+          <div class="mini-stat">
+            <span class="mini-stat-label">SHOWING</span>
+            <span id="stat-showing" class="mini-stat-value">—</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- GAME GRID -->
+      <main class="games-main">
+        <div class="games-header">
+          <h2 class="section-title">SHARED <span class="accent">LIBRARY</span></h2>
+          <div class="view-toggle">
+            <button class="view-btn active" onclick="setView('grid')" title="Grid View">⊞</button>
+            <button class="view-btn" onclick="setView('list')" title="List View">☰</button>
+          </div>
+        </div>
+        <div id="game-grid" class="game-grid">
+          <!-- Cards injected by JS -->
+          <div class="loading-state">
+            <div class="loader-ring"></div>
+            <p>Loading vault...</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- ───────────── STATS TAB ───────────── -->
+  <div id="tab-stats" class="tab-content">
+    <div class="stats-container">
+      <h2 class="section-title page-title">PLAYER <span class="accent">STATISTICS</span></h2>
+      
+      <div class="stats-grid-top">
+        <div class="stat-card glass">
+          <div class="stat-card-icon">🎮</div>
+          <div class="stat-card-info">
+            <span class="stat-card-label">COMBINED HOURS</span>
+            <span id="s-total-hours" class="stat-card-value">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-card-icon">👾</div>
+          <div class="stat-card-info">
+            <span class="stat-card-label">LUCAS TOTAL</span>
+            <span id="s-lucas-hours" class="stat-card-value">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-card-icon">🎯</div>
+          <div class="stat-card-info">
+            <span class="stat-card-label">RAFA TOTAL</span>
+            <span id="s-rafa-hours" class="stat-card-value">—</span>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-card-icon">⭐</div>
+          <div class="stat-card-info">
+            <span class="stat-card-label">GAMES RATED</span>
+            <span id="s-rated-count" class="stat-card-value">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid-bottom">
+        <div class="stats-panel glass">
+          <h3 class="panel-title">⚡ TOP RATED GAMES</h3>
+          <div id="top-rated-list" class="ranked-list"></div>
+        </div>
+        <div class="stats-panel glass">
+          <h3 class="panel-title">🕹️ MOST PLAYED (LUCAS)</h3>
+          <div id="most-played-lucas" class="ranked-list"></div>
+        </div>
+        <div class="stats-panel glass">
+          <h3 class="panel-title">🎯 MOST PLAYED (RAFA)</h3>
+          <div id="most-played-rafa" class="ranked-list"></div>
+        </div>
+        <div class="stats-panel glass">
+          <h3 class="panel-title">📊 TOP CATEGORIES</h3>
+          <div id="top-categories" class="category-bars"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───────────── RANKINGS TAB ───────────── -->
+  <div id="tab-rankings" class="tab-content">
+    <div class="stats-container">
+      <h2 class="section-title page-title">COMMUNITY <span class="accent">RANKINGS</span></h2>
+      <div class="rankings-filters glass" style="margin-bottom:2rem;padding:1.2rem 1.5rem;display:flex;gap:1rem;align-items:center;flex-wrap:wrap;">
+        <span style="color:var(--text-muted);font-size:.8rem;font-family:var(--font-mono);">FILTER BY:</span>
+        <button class="cat-pill active" onclick="filterRankings('all', this)">All</button>
+        <button class="cat-pill" onclick="filterRankings('rated', this)">Rated Only</button>
+        <button class="cat-pill" onclick="filterRankings('unrated', this)">Unrated</button>
+      </div>
+      <div id="rankings-table" class="rankings-table"></div>
+    </div>
+  </div>
+
+</div><!-- end app-page -->
+
+<!-- ═══════════════════════════════ RANKING MODAL ═══════════════════════════════ -->
+<div id="rank-modal" class="modal-overlay hidden" onclick="closeModalOutside(event)">
+  <div class="modal-card glass">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-header">
+      <img id="modal-cover" src="" alt="" class="modal-cover" />
+      <div class="modal-header-info">
+        <h2 id="modal-title" class="modal-game-title"></h2>
+        <div id="modal-cats" class="modal-cats"></div>
+        <div class="modal-playtimes">
+          <div class="modal-time-chip">
+            <span class="time-label">👾 Lucas</span>
+            <span id="modal-my-time" class="time-val">—</span>
+          </div>
+          <div class="modal-time-chip">
+            <span class="time-label">🎯 Rafa</span>
+            <span id="modal-rafa-time" class="time-val">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-scores-section">
+      <h3 class="modal-section-title">COMMUNITY SCORES</h3>
+      <div class="community-scores-row" id="modal-community-scores">
+        <div class="comm-score-block">
+          <span class="comm-score-label">Graphics</span>
+          <div class="comm-score-bars" id="cs-graphics"></div>
+        </div>
+        <div class="comm-score-block">
+          <span class="comm-score-label">Gameplay</span>
+          <div class="comm-score-bars" id="cs-gameplay"></div>
+        </div>
+        <div class="comm-score-block">
+          <span class="comm-score-label">Story</span>
+          <div class="comm-score-bars" id="cs-story"></div>
+        </div>
+        <div class="comm-score-block">
+          <span class="comm-score-label">Fun</span>
+          <div class="comm-score-bars" id="cs-fun"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDIVIDUAL REVIEWS -->
+    <div class="modal-individual-scores">
+      <h4 class="modal-subsection-title" style="margin-top:1.5rem;font-size:0.8rem;color:var(--text-muted);letter-spacing:0.1em;font-family:var(--font-mono);text-transform:uppercase;">Individual Reviews</h4>
+      <div id="modal-reviews-list" style="display:flex;flex-direction:column;gap:1rem;margin-top:1rem;"></div>
+    </div>
+
+    <div class="modal-rate-section">
+      <h3 class="modal-section-title">YOUR RATING</h3>
+      <div class="rating-grid">
+        <div class="rating-row">
+          <label class="rating-label">🎨 Graphics</label>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="10" value="0" step="0.5" class="rating-slider" id="r-graphics" oninput="updateSliderVal('graphics', this.value)" />
+            <span class="slider-val" id="rv-graphics">0</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <label class="rating-label">🕹️ Gameplay</label>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="10" value="0" step="0.5" class="rating-slider" id="r-gameplay" oninput="updateSliderVal('gameplay', this.value)" />
+            <span class="slider-val" id="rv-gameplay">0</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <label class="rating-label">📖 Story</label>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="10" value="0" step="0.5" class="rating-slider" id="r-story" oninput="updateSliderVal('story', this.value)" />
+            <span class="slider-val" id="rv-story">0</span>
+          </div>
+        </div>
+        <div class="rating-row">
+          <label class="rating-label">😄 Fun</label>
+          <div class="slider-wrap">
+            <input type="range" min="0" max="10" value="0" step="0.5" class="rating-slider" id="r-fun" oninput="updateSliderVal('fun', this.value)" />
+            <span class="slider-val" id="rv-fun">0</span>
+          </div>
+        </div>
+      </div>
+      <div class="rating-row comment-row">
+        <label class="rating-label">💬 Comment</label>
+        <textarea id="r-comment" class="rating-comment" placeholder="Your thoughts on this game..."></textarea>
+      </div>
+      <div class="modal-overall">
+        <span class="overall-label">YOUR OVERALL</span>
+        <span id="modal-overall-val" class="overall-value">0.0</span>
+        <span class="overall-max">/10</span>
+      </div>
+    </div>
+
+    <div id="modal-save-error" class="login-error hidden"></div>
+    <button id="modal-save-btn" class="btn-primary" onclick="saveRating()">
+      <span class="btn-text">SAVE RATING</span>
+      <span class="btn-glow"></span>
+    </button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="games.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
